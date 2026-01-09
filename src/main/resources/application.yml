@@ -1,0 +1,23 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: langchain4j-demo
+
+# LangChain4j 配置 (自定义配置，需要在ChatModelConfiguration中读取)
+langchain4j:
+  openai:
+    base-url: http://langchain4j.dev/demo/openai/v1
+    api-key: demo
+    model-name: gpt-4o-mini
+    # 以下是可选配置
+    # temperature: 0.7
+    # max-tokens: 2000
+    # timeout: 60s
+
+# 日志配置
+logging:
+  level:
+    org.example.langchain4jdemo: DEBUG
+    dev.langchain4j: DEBUG
