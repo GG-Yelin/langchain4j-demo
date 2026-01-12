@@ -1,14 +1,18 @@
+server:
+  port: 8081  # MCP Server 端口
+
 spring:
   application:
     name: mcp-server
   main:
-    # 非Web应用（Stdio模式）
-    web-application-type: none
+    # Web应用（HTTP/SSE模式）
+    web-application-type: servlet
 
 # MCP Server 配置
 spring.ai.mcp.server:
   name: langchain4j-demo-mcp-server
   version: 1.0.0
+  sse-message-endpoint: /mcp/message  # SSE 消息端点
 
 # 工具配置
 mcp:
@@ -22,8 +26,9 @@ mcp:
       username:
       password:
 
-# 日志配置 - 输出到stderr，不影响stdio通信
+# 日志配置
 logging:
   level:
     root: INFO
     org.example.mcpserver: DEBUG
+    org.springframework.ai.mcp: DEBUG

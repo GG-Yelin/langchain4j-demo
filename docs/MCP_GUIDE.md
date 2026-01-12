@@ -4,24 +4,24 @@
 
 MCP (Model Context Protocol) 是一个开放协议，用于标准化 AI 应用与外部工具/数据源之间的通信。
 
-### 架构图
+### 架构图 (HTTP/SSE 模式)
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                           你的应用                                   │
+│                      主应用 (localhost:8080)                         │
 │  ┌─────────────┐    ┌─────────────┐    ┌─────────────────────────┐  │
 │  │  Controller │───▶│   Service   │───▶│  ChatModel + McpClient  │  │
 │  └─────────────┘    └─────────────┘    └───────────┬─────────────┘  │
 └───────────────────────────────────────────────────┼─────────────────┘
                                                     │
-                                          MCP 协议 (Stdio/HTTP)
+                                          HTTP/SSE (网络通信)
                                                     │
                     ┌───────────────────────────────┴───────────────────────────┐
                     │                                                           │
                     ▼                                                           ▼
      ┌──────────────────────────────┐                        ┌──────────────────────────────┐
-     │      你的 MCP Server          │                        │      第三方 MCP Server        │
-     │   (mcp-server 模块)           │                        │   (filesystem, github等)     │
+     │   MCP Server (localhost:8081) │                        │      第三方 MCP Server        │
+     │   (独立部署的服务)              │                        │   (可部署在任意机器)          │
      │                              │                        │                              │
      │  - CalculatorTool            │                        │  - 文件读写                   │
      │  - WeatherTool               │                        │  - GitHub 操作               │
@@ -32,16 +32,16 @@ MCP (Model Context Protocol) 是一个开放协议，用于标准化 AI 应用�
 
 ### 通信方式
 
-| 方式 | 说明 | 适用场景 |
-|------|------|----------|
-| **Stdio** | 通过标准输入输出通信 | Server 作为子进程启动 |
-| **HTTP/SSE** | 通过 HTTP 协议通信 | Server 作为独立服务运行 |
+| 方式 | 说明 | 适用场景 | 本项目使用 |
+|------|------|----------|-----------|
+| **Stdio** | 通过标准输入输出通信 | Server 作为子进程启动 | ❌ |
+| **HTTP/SSE** | 通过 HTTP 协议通信 | Server 作为独立服务运行 | ✅ |
 
 ---
 
 ## 二、MCP Server 端（提供工具）
 
-MCP Server 负责定义和暴露工具，供 Client 调用。
+MCP Server 作为独立的 HTTP 服务运行，暴露工具供 Client 调用。
 
 ### 2.1 项目结构
 
@@ -59,7 +59,18 @@ mcp-server/
         └── DatabaseTool.java          # 数据库工具
 ```
 
-### 2.2 定义工具
+### 2.2 Maven 依赖
+
+```xml
+<!-- HTTP/SSE 模式 -->
+<dependency>
+    <groupId>org.springframework.ai</groupId>
+    <artifactId>spring-ai-starter-mcp-server-webmvc</artifactId>
+    <version>1.0.0</version>
+</dependency>
+```
+
+### 2.3 定义工具
 
 使用 `@Tool` 和 `@ToolParam` 注解定义 MCP 工具：
 
@@ -104,7 +115,7 @@ public class CalculatorTool {
 }
 ```
 
-### 2.3 注册工具
+### 2.4 注册工具
 
 在 `McpToolsConfig.java` 中注册工具：
 
@@ -133,23 +144,27 @@ public class McpToolsConfig {
 }
 ```
 
-### 2.4 配置文件
+### 2.5 配置文件
 
 `application.yml`:
 
 ```yaml
+server:
+  port: 8081  # MCP Server 端口
+
 spring:
   application:
     name: mcp-server
   main:
-    web-application-type: none  # Stdio 模式
+    web-application-type: servlet  # HTTP 模式
 
 spring.ai.mcp.server:
-  name: my-mcp-server
+  name: langchain4j-demo-mcp-server
   version: 1.0.0
+  sse-message-endpoint: /mcp/message  # SSE 消息端点
 ```
 
-### 2.5 启动 Server
+### 2.6 启动 Server
 
 ```bash
 cd mcp-server
@@ -162,11 +177,13 @@ mvn package
 java -jar target/mcp-server-0.0.1-SNAPSHOT.jar
 ```
 
+启动后，MCP Server 会在 `http://localhost:8081` 运行。
+
 ---
 
 ## 三、MCP Client 端（调用工具）
 
-主应用作为 MCP Client，连接到 MCP Server 并调用工具。
+主应用作为 MCP Client，通过 HTTP/SSE 连接到 MCP Server。
 
 ### 3.1 添加依赖
 
@@ -178,7 +195,21 @@ java -jar target/mcp-server-0.0.1-SNAPSHOT.jar
 </dependency>
 ```
 
-### 3.2 配置 MCP Client
+### 3.2 配置文件
+
+`application.yml`:
+
+```yaml
+server:
+  port: 8080
+
+# MCP Server 配置 (HTTP/SSE 模式)
+mcp:
+  server:
+    base-url: http://localhost:8081
+```
+
+### 3.3 配置 MCP Client
 
 在 `McpClientConfiguration.java` 中配置：
 
@@ -187,7 +218,8 @@ import dev.langchain4j.mcp.McpToolProvider;
 import dev.langchain4j.mcp.client.DefaultMcpClient;
 import dev.langchain4j.mcp.client.McpClient;
 import dev.langchain4j.mcp.client.transport.McpTransport;
-import dev.langchain4j.mcp.client.transport.stdio.StdioMcpTransport;
+import dev.langchain4j.mcp.client.transport.http.HttpMcpTransport;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -196,18 +228,18 @@ import java.util.List;
 @Configuration
 public class McpClientConfiguration {
 
+    @Value("${mcp.server.base-url:http://localhost:8081}")
+    private String mcpServerBaseUrl;
+
     /**
-     * 创建 MCP Client，连接到 MCP Server
+     * 创建 MCP Client，通过 HTTP/SSE 连接到 MCP Server
      */
     @Bean
     public McpClient mcpClient() {
-        // MCP Server JAR 路径
-        String mcpServerJar = "mcp-server/target/mcp-server-0.0.1-SNAPSHOT.jar";
-
-        // 使用 Stdio 传输
-        McpTransport transport = new StdioMcpTransport.Builder()
-            .command(List.of("java", "-jar", mcpServerJar))
-            .logEvents(true)  // 开启日志便于调试
+        // 使用 HTTP SSE 传输
+        McpTransport transport = new HttpMcpTransport.Builder()
+            .baseUrl(mcpServerBaseUrl)  // MCP Server 地址
+            .sseEndpoint("/sse")        // SSE 端点
             .build();
 
         McpClient client = new DefaultMcpClient.Builder()
@@ -232,7 +264,7 @@ public class McpClientConfiguration {
 }
 ```
 
-### 3.3 在 Service 中使用
+### 3.4 在 Service 中使用
 
 #### 方式1: 使用 AiServices + McpToolProvider（推荐）
 
@@ -282,7 +314,6 @@ public class McpServiceImpl implements McpService {
 
 ```java
 import dev.langchain4j.mcp.client.McpClient;
-import dev.langchain4j.agent.tool.ToolSpecification;
 import io.modelcontextprotocol.spec.McpSchema.Tool;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 
@@ -325,7 +356,19 @@ public class McpServiceImpl implements McpService {
 
 ## 四、完整示例
 
-### 4.1 用户发送请求
+### 4.1 启动服务
+
+```bash
+# 终端1: 启动 MCP Server (端口 8081)
+cd mcp-server
+mvn spring-boot:run
+
+# 终端2: 启动主应用 (端口 8080)
+cd ..
+mvn spring-boot:run
+```
+
+### 4.2 用户发送请求
 
 ```bash
 curl -X POST http://localhost:8080/api/mcp/chat \
@@ -333,20 +376,20 @@ curl -X POST http://localhost:8080/api/mcp/chat \
   -d '{"message": "帮我计算 123 + 456 的结果"}'
 ```
 
-### 4.2 处理流程
+### 4.3 处理流程
 
 ```
-1. 用户请求 → Controller → McpService
+1. 用户请求 → 主应用 Controller (8080)
 2. McpService 使用 AiServices (带 McpToolProvider)
 3. ChatModel 分析用户意图，决定调用 "add" 工具
-4. McpToolProvider 通过 McpClient 调用 MCP Server
+4. McpToolProvider 通过 HTTP/SSE 调用 MCP Server (8081)
 5. MCP Server 执行 CalculatorTool.add(123, 456)
-6. 结果返回给 ChatModel
+6. 结果通过 HTTP 返回给 ChatModel
 7. ChatModel 生成最终回复
 8. 返回给用户: "123 + 456 的结果是 579"
 ```
 
-### 4.3 响应示例
+### 4.4 响应示例
 
 ```json
 {
@@ -364,68 +407,49 @@ curl -X POST http://localhost:8080/api/mcp/chat \
 
 ---
 
-## 五、使用第三方 MCP Server
+## 五、部署架构
 
-除了自己实现的 MCP Server，还可以连接第三方 MCP Server。
+### 5.1 单机部署
 
-### 5.1 文件系统 MCP Server
-
-```java
-@Bean
-public McpClient fileSystemMcpClient() {
-    McpTransport transport = new StdioMcpTransport.Builder()
-        .command(List.of(
-            "npx", "-y",
-            "@modelcontextprotocol/server-filesystem",
-            "/path/to/allowed/directory"
-        ))
-        .build();
-
-    McpClient client = new DefaultMcpClient.Builder()
-        .transport(transport)
-        .build();
-
-    client.initialize();
-    return client;
-}
+```
+┌─────────────────────────────────────────┐
+│              同一台机器                   │
+│                                         │
+│  ┌─────────────────┐  ┌──────────────┐  │
+│  │  主应用 :8080    │  │ MCP Server   │  │
+│  │  (MCP Client)   │──│   :8081      │  │
+│  └─────────────────┘  └──────────────┘  │
+└─────────────────────────────────────────┘
 ```
 
-### 5.2 GitHub MCP Server
+### 5.2 分布式部署
 
-```java
-@Bean
-public McpClient githubMcpClient() {
-    McpTransport transport = new StdioMcpTransport.Builder()
-        .command(List.of("npx", "-y", "@modelcontextprotocol/server-github"))
-        .environment(Map.of("GITHUB_TOKEN", "your-github-token"))
-        .build();
+```
+┌─────────────────┐         ┌─────────────────┐
+│   机器 A         │         │   机器 B         │
+│                 │  HTTP   │                 │
+│  主应用 :8080    │────────▶│  MCP Server     │
+│  (MCP Client)   │         │   :8081         │
+└─────────────────┘         └─────────────────┘
 
-    McpClient client = new DefaultMcpClient.Builder()
-        .transport(transport)
-        .build();
-
-    client.initialize();
-    return client;
-}
+配置: mcp.server.base-url=http://机器B的IP:8081
 ```
 
-### 5.3 多个 MCP Server
+### 5.3 多 MCP Server 部署
 
-```java
-@Bean
-public McpToolProvider mcpToolProvider(
-    McpClient myMcpClient,
-    McpClient fileSystemMcpClient,
-    McpClient githubMcpClient) {
-
-    return McpToolProvider.builder()
-        .mcpClients(List.of(
-            myMcpClient,
-            fileSystemMcpClient,
-            githubMcpClient
-        ))
-        .build();
-}
+```
+                          ┌─────────────────┐
+                    ┌────▶│ MCP Server A    │
+                    │     │ (Calculator)    │
+┌─────────────────┐ │     └─────────────────┘
+│   主应用         │─┤     ┌─────────────────┐
+│  (MCP Client)   │─┼────▶│ MCP Server B    │
+└─────────────────┘ │     │ (Weather)       │
+                    │     └─────────────────┘
+                    │     ┌─────────────────┐
+                    └────▶│ MCP Server C    │
+                          │ (Database)      │
+                          └─────────────────┘
 ```
 
 ---
@@ -449,26 +473,36 @@ MCP Server `application.yml`:
 logging:
   level:
     org.example.mcpserver: DEBUG
-    org.springframework.ai: DEBUG
+    org.springframework.ai.mcp: DEBUG
 ```
 
 ### 6.2 常见问题
 
 | 问题 | 原因 | 解决方案 |
 |------|------|----------|
-| 连接超时 | MCP Server 未启动 | 先启动 MCP Server |
+| Connection refused | MCP Server 未启动 | 先启动 MCP Server |
 | 工具未找到 | 工具未注册 | 检查 McpToolsConfig |
 | 参数错误 | 参数类型不匹配 | 检查 @ToolParam 定义 |
-| Stdio 通信失败 | 日志输出到 stdout | 确保日志输出到 stderr |
+| 连接超时 | 网络不通 | 检查防火墙和端口 |
 
-### 6.3 测试工具列表
+### 6.3 测试 MCP Server 是否正常
+
+```bash
+# 检查 MCP Server 是否启动
+curl http://localhost:8081/actuator/health
+
+# 测试 SSE 端点
+curl http://localhost:8081/sse
+```
+
+### 6.4 测试工具列表
 
 ```bash
 # 获取可用工具列表
 curl http://localhost:8080/api/mcp/tools
 ```
 
-### 6.4 直接调用工具
+### 6.5 直接调用工具
 
 ```bash
 # 直接调用 add 工具
@@ -479,29 +513,16 @@ curl -X POST "http://localhost:8080/api/mcp/invoke?toolName=add" \
 
 ---
 
-## 七、启动顺序
+## 七、与 Stdio 模式对比
 
-```bash
-# 1. 编译 MCP Server
-cd mcp-server
-mvn package
-
-# 2. 启动主应用（会自动启动 MCP Server 子进程）
-cd ..
-mvn spring-boot:run
-```
-
-或者分开启动：
-
-```bash
-# 终端1: 启动 MCP Server
-cd mcp-server
-mvn spring-boot:run
-
-# 终端2: 启动主应用（修改配置使用 HTTP 连接）
-cd ..
-mvn spring-boot:run
-```
+| 特性 | Stdio 模式 | HTTP/SSE 模式 (当前) |
+|------|-----------|---------------------|
+| 部署方式 | Server 作为子进程 | Server 独立部署 |
+| 网络通信 | 无 (进程间通信) | 有 (HTTP) |
+| 可扩展性 | 单机 | 分布式 |
+| 多 Client 共享 | 不支持 | 支持 |
+| 独立升级 | 不方便 | 方便 |
+| 适用场景 | 本地开发/测试 | 生产环境 |
 
 ---
 

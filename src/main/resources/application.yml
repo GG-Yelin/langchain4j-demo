@@ -16,6 +16,11 @@ langchain4j:
     # max-tokens: 2000
     # timeout: 60s
 
+# MCP Server 配置 (HTTP/SSE 模式)
+mcp:
+  server:
+    base-url: http://localhost:8081
+
 # 日志配置
 logging:
   level:

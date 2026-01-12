@@ -1,28 +1,30 @@
 package org.example.langchain4jdemo.mcp.client;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 
 /**
  * MCP Client 配置类
- * 配置连接到独立运行的 MCP Server
+ * 通过 HTTP/SSE 连接到独立运行的 MCP Server
  */
 @Configuration
 public class McpClientConfiguration {
 
-    // TODO: 配置 MCP Client Bean 连接到独立的 MCP Server
+    @Value("${mcp.server.base-url:http://localhost:8081}")
+    private String mcpServerBaseUrl;
+
+    // TODO: 配置 MCP Client Bean 连接到 MCP Server (HTTP/SSE 模式)
     //
     // ============================================
-    // 方式1: 连接到 Stdio MCP Server（推荐）
+    // HTTP/SSE 模式连接 MCP Server
     // ============================================
-    // MCP Server 作为子进程启动，通过标准输入输出通信
     //
     // @Bean
     // public McpClient mcpClient() {
-    //     // 指定 MCP Server JAR 的路径
-    //     String mcpServerJar = "/path/to/mcp-server/target/mcp-server-0.0.1-SNAPSHOT.jar";
-    //
-    //     McpTransport transport = new StdioMcpTransport.Builder()
-    //         .command(List.of("java", "-jar", mcpServerJar))
+    //     // 使用 HTTP SSE 传输连接到 MCP Server
+    //     McpTransport transport = new HttpMcpTransport.Builder()
+    //         .baseUrl(mcpServerBaseUrl)           // MCP Server 地址
+    //         .sseEndpoint("/sse")                 // SSE 端点
     //         .build();
     //
     //     McpClient client = new DefaultMcpClient.Builder()
@@ -34,28 +36,8 @@ public class McpClientConfiguration {
     // }
     //
     // ============================================
-    // 方式2: 连接到第三方 MCP Server
+    // 创建 McpToolProvider 简化工具集成
     // ============================================
-    // 例如: 文件系统、GitHub 等官方 MCP Server
-    //
-    // @Bean
-    // public McpClient npmMcpClient() {
-    //     McpTransport transport = new StdioMcpTransport.Builder()
-    //         .command(List.of("npx", "-y", "@modelcontextprotocol/server-filesystem", "/allowed/path"))
-    //         .build();
-    //
-    //     McpClient client = new DefaultMcpClient.Builder()
-    //         .transport(transport)
-    //         .build();
-    //
-    //     client.initialize();
-    //     return client;
-    // }
-    //
-    // ============================================
-    // 方式3: 创建 McpToolProvider 简化工具集成
-    // ============================================
-    // 将 MCP 工具自动注入到 AiServices
     //
     // @Bean
     // public McpToolProvider mcpToolProvider(McpClient mcpClient) {
