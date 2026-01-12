@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: mcp-server
+  main:
+    # 非Web应用（Stdio模式）
+    web-application-type: none
+
+# MCP Server 配置
+spring.ai.mcp.server:
+  name: langchain4j-demo-mcp-server
+  version: 1.0.0
+
+# 工具配置
+mcp:
+  tools:
+    filesystem:
+      # 文件系统工具允许访问的根目录
+      base-path: ${user.home}
+    database:
+      # 数据库连接配置（如果使用DatabaseTool）
+      jdbc-url:
+      username:
+      password:
+
+# 日志配置 - 输出到stderr，不影响stdio通信
+logging:
+  level:
+    root: INFO
+    org.example.mcpserver: DEBUG
