@@ -1,6 +1,9 @@
 package org.example.langchain4jdemo.service.impl;
 
+import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.UserMessage;
+import dev.langchain4j.memory.ChatMemory;
+import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.request.ChatRequestParameters;
 import dev.langchain4j.model.chat.response.ChatResponse;
@@ -12,12 +15,18 @@ import org.example.langchain4jdemo.dto.ChatResponseVO;
 import org.example.langchain4jdemo.service.ChatService;
 import org.springframework.stereotype.Service;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class ChatServiceImpl implements ChatService {
 
     private final OpenAiChatModel chatModel;
+
+    // 使用 Map 存储每个 sessionId 对应的 ChatMemory
+    private final Map<String, ChatMemory> memoryStore = new ConcurrentHashMap<>();
 
     @Override
     public ChatResponseVO chat(ChatRequestVO requestVO) {
@@ -50,15 +59,46 @@ public class ChatServiceImpl implements ChatService {
     }
 
     @Override
-    public ChatResponseVO chatWithMemory(ChatRequestVO request) {
+    public ChatResponseVO chatWithMemory(ChatRequestVO requestVO) {
         try {
-            // TODO: 在这里实现带记忆的多轮对话
-            // 提示: 使用 ChatMemory 或 MessageWindowChatMemory
-            // 示例:
-            // ChatMemory chatMemory = MessageWindowChatMemory.withMaxMessages(10);
-            // 或使用 AiServices 创建带记忆的服务
+            // 获取 sessionId，如果没有则使用默认值
+            String sessionId = requestVO.getSessionId() != null ? requestVO.getSessionId() : "default-session";
 
-            throw new UnsupportedOperationException("请实现 chatWithMemory 方法");
+            // 获取或创建该 session 的 ChatMemory（最多保留 10 条消息）
+            ChatMemory chatMemory = memoryStore.computeIfAbsent(sessionId,
+                id -> MessageWindowChatMemory.withMaxMessages(10));
+
+            // 添加用户消息到记忆中
+            UserMessage userMessage = UserMessage.from(requestVO.getMessage());
+            chatMemory.add(userMessage);
+
+            // 使用请求中的 temperature，如果没有提供则使用默认值 0.7
+            Double temperature = requestVO.getTemperature() != null ? requestVO.getTemperature() : 0.7;
+
+            // 构建请求，包含历史消息
+            ChatRequest request = ChatRequest.builder()
+                    .messages(chatMemory.messages())  // 使用记忆中的所有消息
+                    .parameters(ChatRequestParameters.builder()
+                            .temperature(temperature)
+                            .build())
+                    .build();
+
+            // 调用 AI 模型
+            ChatResponse response = chatModel.chat(request);
+
+            // 将 AI 的回复也添加到记忆中
+            AiMessage aiMessage = response.aiMessage();
+            chatMemory.add(aiMessage);
+
+            log.info("Chat with memory - SessionId: {}, Messages in memory: {}",
+                    sessionId, chatMemory.messages().size());
+
+            return ChatResponseVO.builder()
+                    .content(aiMessage.text())
+                    .sessionId(sessionId)
+                    .tokenUsageVO(ChatResponseVO.TokenUsageVO.from(response.tokenUsage()))
+                    .success(true)
+                    .build();
 
         } catch (Exception e) {
             log.error("Chat with memory error", e);
