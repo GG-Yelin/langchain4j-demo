@@ -82,6 +82,7 @@ const modes = [
   { value: 'simple', label: '简单聊天' },
   { value: 'memory', label: '记忆聊天' },
   { value: 'stream', label: '流式聊天' },
+  { value: 'assistant', label: 'AI 助手' },
   { value: 'rag', label: 'RAG 问答' },
   { value: 'tool', label: '工具调用' },
   { value: 'mcp', label: 'MCP 工具' }

@@ -15,6 +15,7 @@
       :current-mode="currentMode"
       :is-loading="isLoading"
       @send-message="sendMessage"
+      @send-assistant-message="sendAssistantMessage"
     />
     <McpToolsModal
       v-if="showToolsModal"
@@ -94,6 +95,53 @@ const sendMessage = async (message) => {
       case 'mcp':
         await handleMcpChat(params)
         break
+      case 'assistant':
+        // AI助手模式在 sendAssistantMessage 中单独处理
+        break
+    }
+  } catch (error) {
+    addMessage('assistant', '抱歉，发生错误: ' + error.message, { error: true })
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const sendAssistantMessage = async (data) => {
+  if (isLoading.value) return
+
+  isLoading.value = true
+
+  try {
+    let userDisplayMessage = ''
+    let response = null
+
+    switch (data.type) {
+      case 'simple':
+        userDisplayMessage = data.message
+        addMessage('user', userDisplayMessage)
+        response = await chatApi.assistantChat({ message: data.message })
+        addMessage('assistant', response.response, { type: 'simple-assistant' })
+        break
+
+      case 'custom':
+        userDisplayMessage = `[系统提示词: ${data.systemMessage}]\n${data.message}`
+        addMessage('user', userDisplayMessage)
+        response = await chatApi.assistantChatCustom({
+          systemMessage: data.systemMessage,
+          message: data.message
+        })
+        addMessage('assistant', response.response, { type: 'custom-assistant' })
+        break
+
+      case 'variables':
+        userDisplayMessage = `[语言: ${data.language}] [话题: ${data.topic}]`
+        addMessage('user', userDisplayMessage)
+        response = await chatApi.assistantChatVariables({
+          language: data.language,
+          topic: data.topic
+        })
+        addMessage('assistant', response.response, { type: 'variables-assistant' })
+        break
     }
   } catch (error) {
     addMessage('assistant', '抱歉，发生错误: ' + error.message, { error: true })
@@ -123,11 +171,32 @@ const handleStreamChat = async (params) => {
   const messageIndex = messages.value.length
   addMessage('assistant', '', { streaming: true })
 
-  await chatApi.streamChat(params, (token) => {
-    messages.value[messageIndex].content += token
-  })
+  try {
+    // 注意：由于 LangChain4j 1.0.0-beta3 的流式传输在处理 UTF-8 时存在编码问题，
+    // 这里使用简单聊天接口 + 前端模拟流式显示的方案，以保证中文正常显示
+    const response = await chatApi.simpleChat(params)
 
-  messages.value[messageIndex].metadata.streaming = false
+    if (response.content) {
+      // 逐字显示内容，模拟流式效果
+      const fullText = response.content
+      let currentIndex = 0
+
+      const intervalId = setInterval(() => {
+        if (currentIndex < fullText.length) {
+          messages.value[messageIndex].content = fullText.substring(0, currentIndex + 1)
+          currentIndex++
+        } else {
+          clearInterval(intervalId)
+          messages.value[messageIndex].metadata.streaming = false
+          messages.value[messageIndex].metadata.tokens = response.tokenUsageVO
+        }
+      }, 30) // 每30ms显示一个字符，模拟打字效果
+    }
+  } catch (error) {
+    messages.value[messageIndex].content = '发生错误: ' + error.message
+    messages.value[messageIndex].metadata.streaming = false
+    messages.value[messageIndex].metadata.error = true
+  }
 }
 
 const handleRagChat = async (params) => {

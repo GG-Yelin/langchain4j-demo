@@ -45,6 +45,7 @@ export const streamChat = async (params, onToken) => {
   const reader = response.body.getReader()
   const decoder = new TextDecoder()
   let buffer = ''
+  let currentEvent = null
 
   while (true) {
     const { done, value } = await reader.read()
@@ -55,11 +56,18 @@ export const streamChat = async (params, onToken) => {
     buffer = lines.pop()
 
     for (const line of lines) {
-      if (line.startsWith('data:')) {
+      // 解析 event 类型
+      if (line.startsWith('event:')) {
+        currentEvent = line.substring(6).trim()
+      }
+      // 解析 data 内容
+      else if (line.startsWith('data:')) {
         const data = line.substring(5).trim()
-        if (data) {
+        if (data && currentEvent === 'token') {
+          // 只处理 token 事件，逐字显示
           onToken(data)
         }
+        // complete 事件会在前端自动处理，这里不需要特别处理
       }
     }
   }
@@ -91,5 +99,29 @@ export const mcpChat = async (params) => {
 
 export const getMcpTools = async () => {
   const { data } = await api.get('/mcp/tools')
+  return data
+}
+
+// AI Assistant Service API
+export const assistantChat = async (params) => {
+  const { data } = await api.post('/assistant/chat', {
+    message: params.message
+  })
+  return data
+}
+
+export const assistantChatCustom = async (params) => {
+  const { data } = await api.post('/assistant/chat-custom', {
+    systemMessage: params.systemMessage,
+    message: params.message
+  })
+  return data
+}
+
+export const assistantChatVariables = async (params) => {
+  const { data } = await api.post('/assistant/chat-variables', {
+    language: params.language,
+    topic: params.topic
+  })
   return data
 }

@@ -5,16 +5,18 @@ spring:
   application:
     name: langchain4j-demo
 
-# LangChain4j 配置 (自定义配置，需要在ChatModelConfiguration中读取)
+# LangChain4j Spring Boot Starter 配置
 langchain4j:
-  openai:
-    base-url: http://langchain4j.dev/demo/openai/v1
-    api-key: demo
-    model-name: gpt-4o-mini
-    # 以下是可选配置
-    # temperature: 0.7
-    # max-tokens: 2000
-    # timeout: 60s
+  open-ai:
+    chat-model:
+      base-url: http://langchain4j.dev/demo/openai/v1
+      api-key: demo
+      model-name: gpt-4o-mini
+      temperature: 0.7
+      max-tokens: 2000
+      timeout: 60s
+      log-requests: true
+      log-responses: true
 
 # MCP Server 配置 (HTTP/SSE 模式)
 mcp:
@@ -26,3 +28,5 @@ logging:
   level:
     org.example.langchain4jdemo: DEBUG
     dev.langchain4j: DEBUG
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss} - %msg%n'

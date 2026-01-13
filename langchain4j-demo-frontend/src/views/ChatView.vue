@@ -15,6 +15,7 @@
           <li><strong>简单聊天:</strong> 基础的单次对话</li>
           <li><strong>记忆聊天:</strong> 支持多轮对话的上下文记忆</li>
           <li><strong>流式聊天:</strong> 实时流式输出响应</li>
+          <li><strong>AI 助手:</strong> 使用 @AiService 声明式服务，支持提示词模板和变量</li>
           <li><strong>RAG 问答:</strong> 基于文档检索的问答</li>
           <li><strong>工具调用:</strong> AI自动调用内置工具</li>
           <li><strong>MCP 工具:</strong> 使用MCP协议调用外部工具</li>
@@ -28,7 +29,15 @@
       />
     </div>
 
-    <div class="input-area">
+    <!-- AI 助手模式使用专门的输入组件 -->
+    <AssistantInput
+      v-if="currentMode === 'assistant'"
+      :is-loading="isLoading"
+      @send-assistant-message="handleAssistantSend"
+    />
+
+    <!-- 其他模式使用普通输入 -->
+    <div v-else class="input-area">
       <textarea
         v-model="inputMessage"
         placeholder="输入消息..."
@@ -51,6 +60,7 @@
 <script setup>
 import { ref, nextTick, watch, defineProps, defineEmits } from 'vue'
 import MessageItem from '../components/MessageItem.vue'
+import AssistantInput from '../components/AssistantInput.vue'
 
 const props = defineProps({
   messages: Array,
@@ -58,7 +68,7 @@ const props = defineProps({
   isLoading: Boolean
 })
 
-const emit = defineEmits(['send-message'])
+const emit = defineEmits(['send-message', 'send-assistant-message'])
 
 const inputMessage = ref('')
 const messagesContainer = ref(null)
@@ -68,6 +78,7 @@ const modeLabels = {
   'simple': '简单聊天',
   'memory': '记忆聊天',
   'stream': '流式聊天',
+  'assistant': 'AI 助手',
   'rag': 'RAG 问答',
   'tool': '工具调用',
   'mcp': 'MCP 工具'
@@ -81,6 +92,10 @@ const handleSend = () => {
     emit('send-message', message)
     inputMessage.value = ''
   }
+}
+
+const handleAssistantSend = (data) => {
+  emit('send-assistant-message', data)
 }
 
 const scrollToBottom = () => {

@@ -7,7 +7,9 @@ import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.request.ChatRequestParameters;
 import dev.langchain4j.model.chat.response.ChatResponse;
+import dev.langchain4j.model.chat.response.StreamingChatResponseHandler;
 import dev.langchain4j.model.openai.OpenAiChatModel;
+import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.langchain4jdemo.dto.ChatRequestVO;
@@ -24,6 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ChatServiceImpl implements ChatService {
 
     private final OpenAiChatModel chatModel;
+    private final OpenAiStreamingChatModel streamingChatModel;
 
     // 使用 Map 存储每个 sessionId 对应的 ChatMemory
     private final Map<String, ChatMemory> memoryStore = new ConcurrentHashMap<>();
@@ -110,27 +113,49 @@ public class ChatServiceImpl implements ChatService {
     }
 
     @Override
-    public void streamChat(ChatRequestVO request, StreamCallback callback) {
+    public void streamChat(ChatRequestVO requestVO, StreamCallback callback) {
         try {
-            // TODO: 在这里实现流式聊天
-            // 提示: 使用 StreamingChatLanguageModel
-            // 示例:
-            // streamingChatModel.generate(message, new StreamingResponseHandler<>() {
-            //     @Override
-            //     public void onNext(String token) {
-            //         callback.onToken(token);
-            //     }
-            //     @Override
-            //     public void onComplete(Response<AiMessage> response) {
-            //         callback.onComplete(...);
-            //     }
-            //     @Override
-            //     public void onError(Throwable error) {
-            //         callback.onError(error);
-            //     }
-            // });
 
-            throw new UnsupportedOperationException("请实现 streamChat 方法");
+            // 使用请求中的 temperature，如果没有提供则使用默认值 0.7
+            Double temperature = requestVO.getTemperature() != null ? requestVO.getTemperature() : 0.7;
+
+
+            ChatRequest request = ChatRequest.builder()
+                    .messages(UserMessage.from(requestVO.getMessage()))
+                    .parameters(ChatRequestParameters.builder()
+                            .temperature(temperature)
+                            .build())
+                    .build();
+
+
+            streamingChatModel.chat(request, new StreamingChatResponseHandler() {
+                 @Override
+                 public void onPartialResponse(String token) {
+                     // 每接收到一个 token 就回调前端
+                     log.debug("Received token: [{}]", token);
+                     callback.onToken(token);
+                 }
+
+                 @Override
+                 public void onCompleteResponse(ChatResponse response) {
+                     // 流式传输完成，构建最终的响应对象
+                     log.info("Stream chat completed. Full response: {}", response.aiMessage().text());
+                     ChatResponseVO responseVO = ChatResponseVO.builder()
+                             .content(response.aiMessage().text())
+                             .tokenUsageVO(ChatResponseVO.TokenUsageVO.from(response.tokenUsage()))
+                             .success(true)
+                             .build();
+                     callback.onComplete(responseVO);
+                 }
+
+                 @Override
+                 public void onError(Throwable error) {
+                     // 发生错误时回调
+                     log.error("Stream chat error in handler", error);
+                     callback.onError(error);
+                 }
+             });
+
 
         } catch (Exception e) {
             log.error("Stream chat error", e);
