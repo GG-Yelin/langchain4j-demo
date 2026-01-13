@@ -62,11 +62,11 @@ public class McpServiceImpl implements McpService {
             //     .toList();
 
             // 步骤4: 使用工具进行聊天
-            // ChatRequest chatRequest = ChatRequest.builder()
+            // ChatRequestVO chatRequest = ChatRequestVO.builder()
             //     .messages(UserMessage.from(request.getMessage()))
             //     .toolSpecifications(toolSpecs)
             //     .build();
-            // ChatResponse response = chatModel.chat(chatRequest);
+            // ChatResponseVO response = chatModel.chat(chatRequest);
 
             // 步骤5: 如果AI决定调用工具，执行工具调用
             // if (response.aiMessage().hasToolExecutionRequests()) {

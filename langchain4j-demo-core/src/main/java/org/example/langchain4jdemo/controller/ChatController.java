@@ -1,8 +1,8 @@
 package org.example.langchain4jdemo.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.example.langchain4jdemo.dto.ChatRequest;
-import org.example.langchain4jdemo.dto.ChatResponse;
+import org.example.langchain4jdemo.dto.ChatRequestVO;
+import org.example.langchain4jdemo.dto.ChatResponseVO;
 import org.example.langchain4jdemo.service.ChatService;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -20,7 +20,7 @@ public class ChatController {
      * POST /api/chat/simple
      */
     @PostMapping("/simple")
-    public ChatResponse chat(@RequestBody ChatRequest request) {
+    public ChatResponseVO chat(@RequestBody ChatRequestVO request) {
         return chatService.chat(request);
     }
 
@@ -29,7 +29,7 @@ public class ChatController {
      * POST /api/chat/memory
      */
     @PostMapping("/memory")
-    public ChatResponse chatWithMemory(@RequestBody ChatRequest request) {
+    public ChatResponseVO chatWithMemory(@RequestBody ChatRequestVO request) {
         return chatService.chatWithMemory(request);
     }
 
@@ -38,7 +38,7 @@ public class ChatController {
      * GET /api/chat/stream
      */
     @PostMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter streamChat(@RequestBody ChatRequest request) {
+    public SseEmitter streamChat(@RequestBody ChatRequestVO request) {
         SseEmitter emitter = new SseEmitter(60000L); // 60秒超时
 
         chatService.streamChat(request, new ChatService.StreamCallback() {
@@ -54,7 +54,7 @@ public class ChatController {
             }
 
             @Override
-            public void onComplete(ChatResponse response) {
+            public void onComplete(ChatResponseVO response) {
                 try {
                     emitter.send(SseEmitter.event()
                             .name("complete")

@@ -1,10 +1,14 @@
 package org.example.langchain4jdemo.service.impl;
 
+import dev.langchain4j.data.message.UserMessage;
+import dev.langchain4j.model.chat.request.ChatRequest;
+import dev.langchain4j.model.chat.request.ChatRequestParameters;
+import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.langchain4jdemo.dto.ChatRequest;
-import org.example.langchain4jdemo.dto.ChatResponse;
+import org.example.langchain4jdemo.dto.ChatRequestVO;
+import org.example.langchain4jdemo.dto.ChatResponseVO;
 import org.example.langchain4jdemo.service.ChatService;
 import org.springframework.stereotype.Service;
 
@@ -16,22 +20,27 @@ public class ChatServiceImpl implements ChatService {
     private final OpenAiChatModel chatModel;
 
     @Override
-    public ChatResponse chat(ChatRequest request) {
+    public ChatResponseVO chat(ChatRequestVO requestVO) {
         try {
-            // TODO: 在这里实现简单聊天逻辑
-            // 提示: 使用 chatModel.chat() 或 chatModel.generate()
-            // 示例:
-            // String response = chatModel.chat(request.getMessage());
-            // 或者使用更复杂的方式:
-            // ChatResponse aiResponse = chatModel.chat(ChatRequest.builder()
-            //     .messages(...)
-            //     .build());
+            ChatRequest request = ChatRequest.builder()
+                    .messages(UserMessage.from(requestVO.getMessage()))
+                    .parameters(ChatRequestParameters.builder()
+                            .temperature(0.5)
+                            .toolSpecifications()
+                            .build())
+                    .build();
 
-            throw new UnsupportedOperationException("请实现 chat 方法");
+            ChatResponse response = chatModel.chat(request);
+
+            return ChatResponseVO.builder()
+                    .content(response.aiMessage().text())
+                    .tokenUsageVO(ChatResponseVO.TokenUsageVO.from(response.tokenUsage()))
+                    .success(true)
+                    .build();
 
         } catch (Exception e) {
             log.error("Chat error", e);
-            return ChatResponse.builder()
+            return ChatResponseVO.builder()
                     .success(false)
                     .errorMessage(e.getMessage())
                     .build();
@@ -39,7 +48,7 @@ public class ChatServiceImpl implements ChatService {
     }
 
     @Override
-    public ChatResponse chatWithMemory(ChatRequest request) {
+    public ChatResponseVO chatWithMemory(ChatRequestVO request) {
         try {
             // TODO: 在这里实现带记忆的多轮对话
             // 提示: 使用 ChatMemory 或 MessageWindowChatMemory
@@ -51,7 +60,7 @@ public class ChatServiceImpl implements ChatService {
 
         } catch (Exception e) {
             log.error("Chat with memory error", e);
-            return ChatResponse.builder()
+            return ChatResponseVO.builder()
                     .success(false)
                     .errorMessage(e.getMessage())
                     .build();
@@ -59,7 +68,7 @@ public class ChatServiceImpl implements ChatService {
     }
 
     @Override
-    public void streamChat(ChatRequest request, StreamCallback callback) {
+    public void streamChat(ChatRequestVO request, StreamCallback callback) {
         try {
             // TODO: 在这里实现流式聊天
             // 提示: 使用 StreamingChatLanguageModel

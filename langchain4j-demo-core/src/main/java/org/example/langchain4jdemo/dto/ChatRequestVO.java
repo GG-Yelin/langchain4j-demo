@@ -1,11 +1,13 @@
 package org.example.langchain4jdemo.dto;
 
+import lombok.Builder;
 import lombok.Data;
 
 import java.util.List;
 
 @Data
-public class ChatRequest {
+@Builder
+public class ChatRequestVO {
 
     /**
      * 用户输入的消息

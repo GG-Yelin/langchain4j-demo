@@ -1,7 +1,7 @@
 package org.example.langchain4jdemo.service;
 
-import org.example.langchain4jdemo.dto.ChatRequest;
-import org.example.langchain4jdemo.dto.ChatResponse;
+import org.example.langchain4jdemo.dto.ChatRequestVO;
+import org.example.langchain4jdemo.dto.ChatResponseVO;
 
 /**
  * 聊天服务接口
@@ -12,25 +12,25 @@ public interface ChatService {
     /**
      * 简单聊天 - 单轮对话
      */
-    ChatResponse chat(ChatRequest request);
+    ChatResponseVO chat(ChatRequestVO request);
 
     /**
      * 带记忆的聊天 - 多轮对话
      */
-    ChatResponse chatWithMemory(ChatRequest request);
+    ChatResponseVO chatWithMemory(ChatRequestVO request);
 
     /**
      * 流式聊天（返回的内容会逐步生成）
      * 注意：实际实现时需要配合SSE或WebSocket
      */
-    void streamChat(ChatRequest request, StreamCallback callback);
+    void streamChat(ChatRequestVO request, StreamCallback callback);
 
     /**
      * 流式回调接口
      */
     interface StreamCallback {
         void onToken(String token);
-        void onComplete(ChatResponse response);
+        void onComplete(ChatResponseVO response);
         void onError(Throwable error);
     }
 }
