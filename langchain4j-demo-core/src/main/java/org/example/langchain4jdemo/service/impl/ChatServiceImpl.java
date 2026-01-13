@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.langchain4jdemo.dto.ChatRequestVO;
 import org.example.langchain4jdemo.dto.ChatResponseVO;
 import org.example.langchain4jdemo.service.ChatService;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -22,6 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service
+@Primary  // 设置为主要实现，默认使用这个
 @RequiredArgsConstructor
 public class ChatServiceImpl implements ChatService {
 

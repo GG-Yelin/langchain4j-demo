@@ -73,9 +73,11 @@ curl -X DELETE http://localhost:8080/api/chat/memory
 
 #### 配置方式
 
-默认情况下，使用的是 `ChatServiceImpl`（不带自动过期）。
+默认情况下，使用的是 `ChatServiceImpl`（不带自动过期），因为它被标记为 `@Primary`。
 
-如果要启用自动过期功能，需要修改 `ChatController`：
+##### 方法1：使用 @Qualifier 注解（推荐）
+
+修改 `ChatController` 注入指定的实现：
 
 ```java
 @RestController
@@ -83,10 +85,10 @@ curl -X DELETE http://localhost:8080/api/chat/memory
 @RequiredArgsConstructor
 public class ChatController {
 
-    // 方案1：使用基础实现（手动清理）
-    // private final ChatService chatService;
+    // 默认：使用基础实现（手动清理）
+    private final ChatService chatService;
 
-    // 方案2：使用带过期的实现（自动清理）
+    // 或者明确指定使用带过期的实现（自动清理）
     @Qualifier("chatServiceWithExpiration")
     private final ChatService chatService;
 
@@ -94,24 +96,44 @@ public class ChatController {
 }
 ```
 
-或者在 `application.yml` 中配置：
+##### 方法2：修改 @Primary 注解
+
+如果想让自动过期成为默认实现，交换两个类的 `@Primary` 注解：
+
+```java
+// ChatServiceImpl.java
+@Service
+// @Primary  // 移除此注解
+public class ChatServiceImpl implements ChatService { }
+
+// ChatServiceWithExpirationImpl.java
+@Service("chatServiceWithExpiration")
+@Primary  // 添加此注解
+public class ChatServiceWithExpirationImpl implements ChatService { }
+```
+
+##### 方法3：使用 Profile 配置
+
+使用 Spring Profile 根据环境选择实现：
+
+```java
+@Service
+@Primary
+@Profile("!expiration")  // 非 expiration 环境使用
+public class ChatServiceImpl implements ChatService { }
+
+@Service("chatServiceWithExpiration")
+@Primary
+@Profile("expiration")   // expiration 环境使用
+public class ChatServiceWithExpirationImpl implements ChatService { }
+```
+
+然后在 `application.yml` 中激活：
 
 ```yaml
 spring:
   profiles:
     active: expiration  # 启用自动过期
-```
-
-然后修改 Service 类添加 `@Profile` 注解：
-
-```java
-@Service
-@Profile("!expiration")  // 默认配置
-public class ChatServiceImpl implements ChatService { }
-
-@Service("chatServiceWithExpiration")
-@Profile("expiration")   // 启用自动过期
-public class ChatServiceWithExpirationImpl implements ChatService { }
 ```
 
 #### 调整过期时间
