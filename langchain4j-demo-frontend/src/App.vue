@@ -104,16 +104,16 @@ const sendMessage = async (message) => {
 
 const handleSimpleChat = async (params) => {
   const response = await chatApi.simpleChat(params)
-  addMessage('assistant', response.response, {
-    tokens: response.tokenUsage,
+  addMessage('assistant', response.content, {
+    tokens: response.tokenUsageVO,
     model: response.modelName
   })
 }
 
 const handleMemoryChat = async (params) => {
   const response = await chatApi.memoryChat(params)
-  addMessage('assistant', response.response, {
-    tokens: response.tokenUsage,
+  addMessage('assistant', response.content, {
+    tokens: response.tokenUsageVO,
     model: response.modelName,
     sessionId: params.sessionId
   })

@@ -22,11 +22,13 @@ public class ChatServiceImpl implements ChatService {
     @Override
     public ChatResponseVO chat(ChatRequestVO requestVO) {
         try {
+            // 使用请求中的 temperature，如果没有提供则使用默认值 0.7
+            Double temperature = requestVO.getTemperature() != null ? requestVO.getTemperature() : 0.7;
+
             ChatRequest request = ChatRequest.builder()
                     .messages(UserMessage.from(requestVO.getMessage()))
                     .parameters(ChatRequestParameters.builder()
-                            .temperature(0.5)
-//                            .toolSpecifications()
+                            .temperature(temperature)
                             .build())
                     .build();
 
