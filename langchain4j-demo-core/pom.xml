@@ -10,35 +10,39 @@
         <version>0.0.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>mcp-server</artifactId>
+    <artifactId>langchain4j-demo-core</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>mcp-server</name>
-    <description>独立的 MCP Server 服务 (基于 Spring AI)</description>
-
-    <properties>
-        <java.version>17</java.version>
-        <spring-ai.version>1.0.0</spring-ai.version>
-        <spring-boot.version>3.4.1</spring-boot.version>
-    </properties>
-
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-dependencies</artifactId>
-                <version>${spring-boot.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
+    <name>langchain4j-demo-core</name>
+    <description>LangChain4j 核心模块</description>
 
     <dependencies>
-        <!-- Spring AI MCP Server (HTTP/SSE 模式) -->
         <dependency>
-            <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-starter-mcp-server-webmvc</artifactId>
-            <version>${spring-ai.version}</version>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-open-ai</artifactId>
+            <version>1.0.0-beta3</version>
+        </dependency>
+
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-mcp</artifactId>
+            <version>1.0.0-beta3</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -59,7 +63,7 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <version>${spring-boot.version}</version>
                 <configuration>
-                    <mainClass>org.example.mcpserver.McpServerApplication</mainClass>
+                    <mainClass>org.example.langchain4jdemo.Langchain4jDemoApplication</mainClass>
                 </configuration>
                 <executions>
                     <execution>
