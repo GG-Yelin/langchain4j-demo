@@ -26,7 +26,7 @@ public class ChatServiceImpl implements ChatService {
                     .messages(UserMessage.from(requestVO.getMessage()))
                     .parameters(ChatRequestParameters.builder()
                             .temperature(0.5)
-                            .toolSpecifications()
+//                            .toolSpecifications()
                             .build())
                     .build();
 
