@@ -20,6 +20,23 @@ public interface ChatService {
     ChatResponseVO chatWithMemory(ChatRequestVO request);
 
     /**
+     * 清除指定会话的记忆
+     * @param sessionId 会话ID
+     */
+    void clearMemory(String sessionId);
+
+    /**
+     * 清除所有会话的记忆
+     */
+    void clearAllMemory();
+
+    /**
+     * 获取当前存储的会话数量
+     * @return 会话数量
+     */
+    int getMemorySessionCount();
+
+    /**
      * 流式聊天（返回的内容会逐步生成）
      * 注意：实际实现时需要配合SSE或WebSocket
      */

@@ -84,4 +84,61 @@ public class ChatController {
 
         return emitter;
     }
+
+    /**
+     * 清除指定会话的记忆
+     * DELETE /api/chat/memory/{sessionId}
+     */
+    @DeleteMapping("/memory/{sessionId}")
+    public MemoryManagementResponse clearMemory(@PathVariable String sessionId) {
+        log.info("Clear memory request for session: {}", sessionId);
+        chatService.clearMemory(sessionId);
+        return new MemoryManagementResponse(
+                true,
+                "Memory cleared for session: " + sessionId,
+                chatService.getMemorySessionCount()
+        );
+    }
+
+    /**
+     * 清除所有会话的记忆
+     * DELETE /api/chat/memory
+     */
+    @DeleteMapping("/memory")
+    public MemoryManagementResponse clearAllMemory() {
+        log.info("Clear all memory request");
+        int count = chatService.getMemorySessionCount();
+        chatService.clearAllMemory();
+        return new MemoryManagementResponse(
+                true,
+                "All memory cleared. Total sessions removed: " + count,
+                0
+        );
+    }
+
+    /**
+     * 获取内存状态
+     * GET /api/chat/memory/stats
+     */
+    @GetMapping("/memory/stats")
+    public MemoryStatsResponse getMemoryStats() {
+        int sessionCount = chatService.getMemorySessionCount();
+        return new MemoryStatsResponse(sessionCount);
+    }
+
+    /**
+     * 内存管理响应
+     */
+    public record MemoryManagementResponse(
+            boolean success,
+            String message,
+            int remainingSessions
+    ) {}
+
+    /**
+     * 内存统计响应
+     */
+    public record MemoryStatsResponse(
+            int totalSessions
+    ) {}
 }
