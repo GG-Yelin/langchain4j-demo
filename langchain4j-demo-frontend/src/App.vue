@@ -120,7 +120,10 @@ const sendAssistantMessage = async (data) => {
         userDisplayMessage = data.message
         addMessage('user', userDisplayMessage)
         response = await chatApi.assistantChat({ message: data.message })
-        addMessage('assistant', response.response, { type: 'simple-assistant' })
+        addMessage('assistant', response.response, {
+          type: 'simple-assistant',
+          tokens: response.tokenUsage
+        })
         break
 
       case 'custom':
@@ -130,7 +133,10 @@ const sendAssistantMessage = async (data) => {
           systemMessage: data.systemMessage,
           message: data.message
         })
-        addMessage('assistant', response.response, { type: 'custom-assistant' })
+        addMessage('assistant', response.response, {
+          type: 'custom-assistant',
+          tokens: response.tokenUsage
+        })
         break
 
       case 'variables':
@@ -140,7 +146,10 @@ const sendAssistantMessage = async (data) => {
           language: data.language,
           topic: data.topic
         })
-        addMessage('assistant', response.response, { type: 'variables-assistant' })
+        addMessage('assistant', response.response, {
+          type: 'variables-assistant',
+          tokens: response.tokenUsage
+        })
         break
     }
   } catch (error) {

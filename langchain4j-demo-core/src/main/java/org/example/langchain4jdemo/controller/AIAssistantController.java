@@ -1,12 +1,16 @@
 package org.example.langchain4jdemo.controller;
 
+import dev.langchain4j.service.Result;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.langchain4jdemo.dto.ChatResponseVO;
 import org.example.langchain4jdemo.service.AIAssistantService;
 import org.springframework.web.bind.annotation.*;
+
 
 /**
  * AI 助手控制器
@@ -25,12 +29,17 @@ public class AIAssistantController {
      * POST /api/assistant/chat
      */
     @PostMapping("/chat")
-    public ChatResponse chat(@RequestBody ChatRequest request) {
+    public AssistantResponse chat(@RequestBody ChatRequest request) {
         log.info("AI Assistant chat request: {}", request.message);
 
-        String response = aiAssistantService.chat(request.message);
+        Result<String> result = aiAssistantService.chat(request.message);
 
-        return new ChatResponse(response);
+        return AssistantResponse.builder()
+                .response(result.content())
+                .tokenUsage(result.tokenUsage() != null
+                    ? ChatResponseVO.TokenUsageVO.from(result.tokenUsage())
+                    : null)
+                .build();
     }
 
     /**
@@ -38,16 +47,21 @@ public class AIAssistantController {
      * POST /api/assistant/chat-custom
      */
     @PostMapping("/chat-custom")
-    public ChatResponse chatCustom(@RequestBody CustomChatRequest request) {
+    public AssistantResponse chatCustom(@RequestBody CustomChatRequest request) {
         log.info("AI Assistant custom chat request: system={}, message={}",
                 request.systemMessage, request.message);
 
-        String response = aiAssistantService.chatWithSystemMessage(
+        Result<String> result = aiAssistantService.chatWithSystemMessage(
                 request.systemMessage,
                 request.message
         );
 
-        return new ChatResponse(response);
+        return AssistantResponse.builder()
+                .response(result.content())
+                .tokenUsage(result.tokenUsage() != null
+                    ? ChatResponseVO.TokenUsageVO.from(result.tokenUsage())
+                    : null)
+                .build();
     }
 
     /**
@@ -55,16 +69,21 @@ public class AIAssistantController {
      * POST /api/assistant/chat-variables
      */
     @PostMapping("/chat-variables")
-    public ChatResponse chatWithVariables(@RequestBody VariableChatRequest request) {
+    public AssistantResponse chatWithVariables(@RequestBody VariableChatRequest request) {
         log.info("AI Assistant variable chat: language={}, topic={}",
                 request.language, request.topic);
 
-        String response = aiAssistantService.chatWithVariables(
+        Result<String> result = aiAssistantService.chatWithVariables(
                 request.language,
                 request.topic
         );
 
-        return new ChatResponse(response);
+        return AssistantResponse.builder()
+                .response(result.content())
+                .tokenUsage(result.tokenUsage() != null
+                    ? ChatResponseVO.TokenUsageVO.from(result.tokenUsage())
+                    : null)
+                .build();
     }
 
     // 请求和响应对象
@@ -91,10 +110,22 @@ public class AIAssistantController {
         private String topic;
     }
 
+    /**
+     * AI 助手响应对象
+     */
     @Data
+    @Builder
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ChatResponse {
+    public static class AssistantResponse {
+        /**
+         * AI 回复内容
+         */
         private String response;
+
+        /**
+         * Token 使用情况
+         */
+        private ChatResponseVO.TokenUsageVO tokenUsage;
     }
 }
