@@ -36,6 +36,7 @@ public class ChatResponseVO {
     private String errorMessage;
 
     @Data
+    @Builder
     @NoArgsConstructor
     @AllArgsConstructor
     public static class TokenUsageVO {

@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 public class AIAssistantController {
 
     private final AIAssistantService aiAssistantService;
+    private final org.example.langchain4jdemo.service.AIAssistantWithToolsService aiAssistantWithToolsService;
 
     /**
      * 简单聊天接口
@@ -86,6 +87,44 @@ public class AIAssistantController {
                 .build();
     }
 
+    /**
+     * 带工具调用的简单聊天
+     * POST /api/assistant/chat-with-tools
+     */
+    @PostMapping("/chat-with-tools")
+    public AssistantResponse chatWithTools(@RequestBody ChatRequest request) {
+        log.info("AI Assistant chat with tools request: {}", request.message);
+        return aiAssistantWithToolsService.chatWithTools(request.message);
+    }
+
+    /**
+     * 带工具调用和自定义系统提示词的聊天
+     * POST /api/assistant/chat-with-tools-custom
+     */
+    @PostMapping("/chat-with-tools-custom")
+    public AssistantResponse chatWithToolsCustom(@RequestBody CustomChatRequest request) {
+        log.info("AI Assistant chat with tools (custom): system={}, message={}",
+                request.systemMessage, request.message);
+        return aiAssistantWithToolsService.chatWithToolsAndCustomSystem(
+                request.systemMessage,
+                request.message
+        );
+    }
+
+    /**
+     * 带工具调用和变量的聊天
+     * POST /api/assistant/chat-with-tools-variables
+     */
+    @PostMapping("/chat-with-tools-variables")
+    public AssistantResponse chatWithToolsVariables(@RequestBody VariableChatRequest request) {
+        log.info("AI Assistant chat with tools (variables): language={}, topic={}",
+                request.language, request.topic);
+        return aiAssistantWithToolsService.chatWithToolsAndVariables(
+                request.language,
+                request.topic
+        );
+    }
+
     // 请求和响应对象
     @Data
     @NoArgsConstructor
@@ -127,5 +166,34 @@ public class AIAssistantController {
          * Token 使用情况
          */
         private ChatResponseVO.TokenUsageVO tokenUsage;
+
+        /**
+         * 工具调用信息（如果有）
+         */
+        private java.util.List<ToolExecutionInfo> toolExecutions;
+    }
+
+    /**
+     * 工具执行信息
+     */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ToolExecutionInfo {
+        /**
+         * 工具名称
+         */
+        private String toolName;
+
+        /**
+         * 工具参数
+         */
+        private String arguments;
+
+        /**
+         * 执行结果
+         */
+        private String result;
     }
 }

@@ -162,6 +162,45 @@ const sendAssistantMessage = async (data) => {
           tokens: response.tokenUsage
         })
         break
+
+      case 'simple-tools':
+        userDisplayMessage = data.message
+        addMessage('user', userDisplayMessage)
+        response = await chatApi.assistantChatWithTools({ message: data.message })
+        addMessage('assistant', response.response, {
+          type: 'simple-tools-assistant',
+          tokens: response.tokenUsage,
+          toolCalls: response.toolExecutions
+        })
+        break
+
+      case 'custom-tools':
+        userDisplayMessage = `[系统提示词: ${data.systemMessage}]\n${data.message}`
+        addMessage('user', userDisplayMessage)
+        response = await chatApi.assistantChatWithToolsCustom({
+          systemMessage: data.systemMessage,
+          message: data.message
+        })
+        addMessage('assistant', response.response, {
+          type: 'custom-tools-assistant',
+          tokens: response.tokenUsage,
+          toolCalls: response.toolExecutions
+        })
+        break
+
+      case 'variables-tools':
+        userDisplayMessage = `[语言: ${data.language}] [话题: ${data.topic}]`
+        addMessage('user', userDisplayMessage)
+        response = await chatApi.assistantChatWithToolsVariables({
+          language: data.language,
+          topic: data.topic
+        })
+        addMessage('assistant', response.response, {
+          type: 'variables-tools-assistant',
+          tokens: response.tokenUsage,
+          toolCalls: response.toolExecutions
+        })
+        break
     }
   } catch (error) {
     addMessage('assistant', '抱歉，发生错误: ' + error.message, { error: true })

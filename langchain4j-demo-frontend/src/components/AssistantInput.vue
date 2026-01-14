@@ -66,6 +66,62 @@
         {{ isLoading ? '发送中...' : '发送' }}
       </button>
     </div>
+
+    <!-- 简单助手聊天 (带工具) -->
+    <div v-if="selectedMode === 'simple-tools'" class="input-group">
+      <label>消息 <span class="tools-badge">支持工具调用</span></label>
+      <textarea
+        v-model="simpleMessage"
+        placeholder="输入你的问题（可使用计算器、日期时间、文本处理工具）..."
+        rows="3"
+        @keydown.enter.exact.prevent="handleSimpleToolsSend"
+      ></textarea>
+      <button @click="handleSimpleToolsSend" :disabled="isLoading || !simpleMessage.trim()" class="send-btn">
+        {{ isLoading ? '发送中...' : '发送' }}
+      </button>
+    </div>
+
+    <!-- 自定义系统提示词 (带工具) -->
+    <div v-if="selectedMode === 'custom-tools'" class="input-group">
+      <label>系统提示词 <span class="tools-badge">支持工具调用</span></label>
+      <textarea
+        v-model="systemMessage"
+        placeholder="例如: You are a professional translator."
+        rows="2"
+      ></textarea>
+
+      <label>用户消息</label>
+      <textarea
+        v-model="customMessage"
+        placeholder="输入你的问题..."
+        rows="3"
+        @keydown.enter.exact.prevent="handleCustomToolsSend"
+      ></textarea>
+      <button @click="handleCustomToolsSend" :disabled="isLoading || !customMessage.trim() || !systemMessage.trim()" class="send-btn">
+        {{ isLoading ? '发送中...' : '发送' }}
+      </button>
+    </div>
+
+    <!-- 变量模板 (带工具) -->
+    <div v-if="selectedMode === 'variables-tools'" class="input-group">
+      <label>语言 (Language) <span class="tools-badge">支持工具调用</span></label>
+      <input
+        v-model="language"
+        type="text"
+        placeholder="例如: Chinese, English, Japanese"
+      />
+
+      <label>话题 (Topic)</label>
+      <input
+        v-model="topic"
+        type="text"
+        placeholder="例如: artificial intelligence, cooking, history"
+        @keydown.enter.exact.prevent="handleVariablesToolsSend"
+      />
+      <button @click="handleVariablesToolsSend" :disabled="isLoading || !language.trim() || !topic.trim()" class="send-btn">
+        {{ isLoading ? '发送中...' : '发送' }}
+      </button>
+    </div>
   </div>
 </template>
 
@@ -88,7 +144,10 @@ const topic = ref('')
 const assistantModes = [
   { value: 'simple', label: '简单助手' },
   { value: 'custom', label: '自定义提示词' },
-  { value: 'variables', label: '变量模板' }
+  { value: 'variables', label: '变量模板' },
+  { value: 'simple-tools', label: '简单助手(工具)' },
+  { value: 'custom-tools', label: '自定义(工具)' },
+  { value: 'variables-tools', label: '变量(工具)' }
 ]
 
 const handleSimpleSend = () => {
@@ -117,6 +176,39 @@ const handleVariablesSend = () => {
 
   emit('send-assistant-message', {
     type: 'variables',
+    language: language.value.trim(),
+    topic: topic.value.trim()
+  })
+  language.value = ''
+  topic.value = ''
+}
+
+const handleSimpleToolsSend = () => {
+  if (!simpleMessage.value.trim() || props.isLoading) return
+
+  emit('send-assistant-message', {
+    type: 'simple-tools',
+    message: simpleMessage.value.trim()
+  })
+  simpleMessage.value = ''
+}
+
+const handleCustomToolsSend = () => {
+  if (!customMessage.value.trim() || !systemMessage.value.trim() || props.isLoading) return
+
+  emit('send-assistant-message', {
+    type: 'custom-tools',
+    systemMessage: systemMessage.value.trim(),
+    message: customMessage.value.trim()
+  })
+  customMessage.value = ''
+}
+
+const handleVariablesToolsSend = () => {
+  if (!language.value.trim() || !topic.value.trim() || props.isLoading) return
+
+  emit('send-assistant-message', {
+    type: 'variables-tools',
     language: language.value.trim(),
     topic: topic.value.trim()
   })
@@ -212,6 +304,17 @@ const handleVariablesSend = () => {
   background: #ccc;
   cursor: not-allowed;
   transform: none;
+}
+
+.tools-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-left: 8px;
 }
 
 @media (max-width: 768px) {

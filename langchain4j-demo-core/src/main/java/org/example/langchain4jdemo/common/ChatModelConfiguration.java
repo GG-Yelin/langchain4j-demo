@@ -51,9 +51,31 @@ public class ChatModelConfiguration {
     /**
      * 创建 AIAssistantService 的实现
      * 使用 AiServices.create() 手动创建，演示声明式 AI 服务
+     *
+     * 注意：这个bean不包含工具，如果需要工具支持，请使用 aiAssistantServiceWithTools
      */
-    @Bean
-    public AIAssistantService aiAssistantService(OpenAiChatModel chatModel) {
-        return AiServices.create(AIAssistantService.class, chatModel);
-    }
+//    @Bean
+//    public AIAssistantService aiAssistantService(OpenAiChatModel chatModel) {
+//        return AiServices.create(AIAssistantService.class, chatModel);
+//    }
+
+    /**
+     * 创建带工具的 AIAssistantService
+     * 演示如何在 AiService 中指定 @Tool
+     *
+     * 注意：这个 AIAssistantService 配置了工具，但只能返回最终文本结果
+     * 如果需要工具调用的详细信息（工具名、参数、结果），
+     * 应使用 AIAssistantWithToolsService（详细版）
+     */
+     @Bean
+     public AIAssistantService aiAssistantService(OpenAiChatModel chatModel) {
+         return AiServices.builder(AIAssistantService.class)
+                 .chatLanguageModel(chatModel)
+                 .tools(
+                     new org.example.langchain4jdemo.tools.BuiltInTools.Calculator(),
+                     new org.example.langchain4jdemo.tools.BuiltInTools.DateTime(),
+                     new org.example.langchain4jdemo.tools.BuiltInTools.TextProcessor()
+                 )
+                 .build();
+     }
 }

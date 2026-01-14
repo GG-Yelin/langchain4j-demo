@@ -130,3 +130,27 @@ export const assistantChatVariables = async (params) => {
   })
   return data
 }
+
+// AI Assistant with Tools API
+export const assistantChatWithTools = async (params) => {
+  const { data } = await api.post('/assistant/chat-with-tools', {
+    message: params.message
+  })
+  return data
+}
+
+export const assistantChatWithToolsCustom = async (params) => {
+  const { data } = await api.post('/assistant/chat-with-tools-custom', {
+    systemMessage: params.systemMessage,
+    message: params.message
+  })
+  return data
+}
+
+export const assistantChatWithToolsVariables = async (params) => {
+  const { data } = await api.post('/assistant/chat-with-tools-variables', {
+    language: params.language,
+    topic: params.topic
+  })
+  return data
+}
