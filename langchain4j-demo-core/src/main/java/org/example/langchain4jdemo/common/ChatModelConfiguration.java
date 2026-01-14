@@ -1,5 +1,6 @@
 package org.example.langchain4jdemo.common;
 
+import dev.langchain4j.data.message.ToolExecutionResultMessage;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
 import dev.langchain4j.service.AiServices;
@@ -76,6 +77,10 @@ public class ChatModelConfiguration {
                      new org.example.langchain4jdemo.tools.BuiltInTools.DateTime(),
                      new org.example.langchain4jdemo.tools.BuiltInTools.TextProcessor()
                  )
+                 // LLM可能出现工具幻觉，调用一个不存在的工具
+                 // 配置工具幻觉策略，当出现工具幻觉时，向LLM返回一个响应，告诉他之前调用的工具不存在，希望推动他调用不同的工具
+                 .hallucinatedToolNameStrategy(toolExecutionRequest ->
+                         ToolExecutionResultMessage.from(toolExecutionRequest, "错误，没有名为 " + toolExecutionRequest.name() + " 的工具"))
                  .build();
      }
 }

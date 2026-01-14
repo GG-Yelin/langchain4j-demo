@@ -49,39 +49,42 @@ public AIAssistantService aiAssistantService(OpenAiChatModel chatModel) {
 ```java
 // AIAssistantWithToolsServiceImpl.java
 @Service
+@RequiredArgsConstructor
 public class AIAssistantWithToolsServiceImpl implements AIAssistantWithToolsService {
 
-    private final OpenAiChatModel chatModel;
-
-    // 手动管理工具实例和规范
-    private final List<Object> toolInstances;
-    private final List<ToolSpecification> toolSpecifications;
+    // 直接使用已配置工具的 AIAssistantService
+    private final AIAssistantService aiAssistantService;
 
     public AssistantResponse chatWithTools(String message) {
-        // 1. 第一次 AI 调用：决定是否需要工具
-        ChatResponse response = chatModel.chat(request);
+        // AI 自动判断是否需要调用工具，并自动执行
+        Result<String> result = aiAssistantService.chat(message);
 
-        // 2. 执行工具并记录详情
-        List<ToolExecutionInfo> toolExecutions = executeTools(...);
-
-        // 3. 第二次 AI 调用：基于工具结果生成回复
-        ChatResponse finalResponse = chatModel.chat(finalRequest);
-
-        // 4. 返回完整信息
+        // 返回完整信息
         return AssistantResponse.builder()
-                .response(finalResponse.aiMessage().text())
-                .tokenUsage(累计的token统计)
-                .toolExecutions(toolExecutions)  // ✅ 工具详情
+                .response(result.content())
+                .tokenUsage(result.tokenUsage())
+                .toolExecutions(convertToolExecutions(result.toolExecutions()))  // ✅ 工具详情
                 .build();
+    }
+
+    // 转换 ToolExecution 为前端格式
+    private List<ToolExecutionInfo> convertToolExecutions(List<ToolExecution> toolExecutions) {
+        return toolExecutions.stream()
+                .map(te -> ToolExecutionInfo.builder()
+                        .toolName(te.request().name())
+                        .arguments(te.request().arguments())
+                        .result(te.result())
+                        .build())
+                .collect(Collectors.toList());
     }
 }
 ```
 
 **特点**：
 - ✅ 完整的工具调用详情（名称、参数、结果）
-- ✅ 精确的token统计（两次调用分别统计和累计）
+- ✅ 精确的token统计
 - ✅ 便于调试和监控
-- ❌ 代码相对复杂（298行 vs 简单版的直接调用）
+- ✅ 代码简洁（直接使用 Result.toolExecutions()）
 
 **使用场景**：
 - `/api/assistant/chat-with-tools` - 简单聊天（带工具详情）

@@ -1,6 +1,7 @@
 package org.example.langchain4jdemo.service.impl;
 
 import dev.langchain4j.service.Result;
+import dev.langchain4j.service.tool.ToolExecution;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.langchain4jdemo.controller.AIAssistantController;
@@ -9,16 +10,15 @@ import org.example.langchain4jdemo.service.AIAssistantService;
 import org.example.langchain4jdemo.service.AIAssistantWithToolsService;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 带工具调用支持的 AI 助手服务实现
  *
  * 直接使用已配置工具的 AIAssistantService，无需手动管理工具
- * LangChain4j 会自动处理工具调用的全过程
- *
- * 注意：由于 Result<String> 不包含工具调用详情，
- * 所以 toolExecutions 返回空列表，但工具仍会被自动调用
+ * LangChain4j 会自动处理工具调用的全过程，并通过 Result.toolExecutions() 返回详情
  */
 @Slf4j
 @Service
@@ -37,13 +37,14 @@ public class AIAssistantWithToolsServiceImpl implements AIAssistantWithToolsServ
         Result<String> result = aiAssistantService.chat(userMessage);
 
         log.info("Response: {}", result.content());
+        log.info("Tool executions: {}", result.toolExecutions());
 
         return AIAssistantController.AssistantResponse.builder()
                 .response(result.content())
                 .tokenUsage(result.tokenUsage() != null
                         ? ChatResponseVO.TokenUsageVO.from(result.tokenUsage())
                         : null)
-                .toolExecutions(List.of())  // 无法获取工具调用详情，但工具会被自动调用
+                .toolExecutions(convertToolExecutions(result.toolExecutions()))
                 .build();
     }
 
@@ -61,12 +62,14 @@ public class AIAssistantWithToolsServiceImpl implements AIAssistantWithToolsServ
                 userMessage
         );
 
+        log.info("Tool executions: {}", result.toolExecutions());
+
         return AIAssistantController.AssistantResponse.builder()
                 .response(result.content())
                 .tokenUsage(result.tokenUsage() != null
                         ? ChatResponseVO.TokenUsageVO.from(result.tokenUsage())
                         : null)
-                .toolExecutions(List.of())
+                .toolExecutions(convertToolExecutions(result.toolExecutions()))
                 .build();
     }
 
@@ -80,13 +83,34 @@ public class AIAssistantWithToolsServiceImpl implements AIAssistantWithToolsServ
         // 使用变量模板
         Result<String> result = aiAssistantService.chatWithVariables(language, topic);
 
+        log.info("Tool executions: {}", result.toolExecutions());
+
         return AIAssistantController.AssistantResponse.builder()
                 .response(result.content())
                 .tokenUsage(result.tokenUsage() != null
                         ? ChatResponseVO.TokenUsageVO.from(result.tokenUsage())
                         : null)
-                .toolExecutions(List.of())
+                .toolExecutions(convertToolExecutions(result.toolExecutions()))
                 .build();
+    }
+
+    /**
+     * 转换 LangChain4j 的 ToolExecution 为前端需要的格式
+     */
+    private List<AIAssistantController.ToolExecutionInfo> convertToolExecutions(
+            List<ToolExecution> toolExecutions) {
+
+        if (toolExecutions == null || toolExecutions.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return toolExecutions.stream()
+                .map(te -> AIAssistantController.ToolExecutionInfo.builder()
+                        .toolName(te.request().name())
+                        .arguments(te.request().arguments())
+                        .result(te.result())
+                        .build())
+                .collect(Collectors.toList());
     }
 }
 
