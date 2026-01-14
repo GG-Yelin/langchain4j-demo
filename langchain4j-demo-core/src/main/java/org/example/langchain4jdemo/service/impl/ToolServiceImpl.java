@@ -64,6 +64,7 @@ public class ToolServiceImpl implements ToolService {
 
             ChatResponse response = chatModel.chat(request);
             AiMessage aiMessage = response.aiMessage();
+            log.info("First call model, response = {}", aiMessage);
 
             // 初始化 token 计数器
             int totalInputTokens = 0;
