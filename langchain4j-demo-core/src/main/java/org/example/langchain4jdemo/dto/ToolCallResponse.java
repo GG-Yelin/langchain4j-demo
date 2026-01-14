@@ -1,5 +1,6 @@
 package org.example.langchain4jdemo.dto;
 
+import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import lombok.Builder;
 import lombok.Data;
 
@@ -39,5 +40,6 @@ public class ToolCallResponse {
          * 执行结果
          */
         private String result;
+
     }
 }

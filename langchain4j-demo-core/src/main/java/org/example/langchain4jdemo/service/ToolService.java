@@ -1,6 +1,6 @@
 package org.example.langchain4jdemo.service;
 
-import org.example.langchain4jdemo.dto.ToolCallRequest;
+import org.example.langchain4jdemo.dto.ToolCallRequestVo;
 import org.example.langchain4jdemo.dto.ToolCallResponse;
 
 /**
@@ -12,5 +12,5 @@ public interface ToolService {
     /**
      * 带工具调用的聊天
      */
-    ToolCallResponse chatWithTools(ToolCallRequest request);
+    ToolCallResponse chatWithTools(ToolCallRequestVo request);
 }

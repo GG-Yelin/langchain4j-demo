@@ -8,6 +8,7 @@
       @mode-change="handleModeChange"
       @settings-change="handleSettingsChange"
       @clear-chat="clearMessages"
+      @show-local-tools="showLocalToolsModal = true"
       @show-tools="showToolsModal = true"
     />
     <ChatView
@@ -16,6 +17,10 @@
       :is-loading="isLoading"
       @send-message="sendMessage"
       @send-assistant-message="sendAssistantMessage"
+    />
+    <LocalToolsModal
+      v-if="showLocalToolsModal"
+      @close="showLocalToolsModal = false"
     />
     <McpToolsModal
       v-if="showToolsModal"
@@ -28,6 +33,7 @@
 import { ref } from 'vue'
 import Sidebar from './components/Sidebar.vue'
 import ChatView from './views/ChatView.vue'
+import LocalToolsModal from './components/LocalToolsModal.vue'
 import McpToolsModal from './components/McpToolsModal.vue'
 import * as chatApi from './api/chat'
 
@@ -37,6 +43,7 @@ const temperature = ref(0.7)
 const maxTokens = ref(2000)
 const messages = ref([])
 const isLoading = ref(false)
+const showLocalToolsModal = ref(false)
 const showToolsModal = ref(false)
 
 const handleModeChange = (mode) => {
@@ -218,8 +225,8 @@ const handleRagChat = async (params) => {
 
 const handleToolChat = async (params) => {
   const response = await chatApi.toolChat(params)
-  addMessage('assistant', response.response, {
-    toolCalls: response.toolCalls,
+  addMessage('assistant', response.content, {
+    toolCalls: response.toolExecutions,
     tokens: response.tokenUsage
   })
 }

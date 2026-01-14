@@ -102,6 +102,11 @@ export const getMcpTools = async () => {
   return data
 }
 
+export const getLocalTools = async () => {
+  const { data } = await api.get('/tool/available')
+  return data
+}
+
 // AI Assistant Service API
 export const assistantChat = async (params) => {
   const { data } = await api.post('/assistant/chat', {

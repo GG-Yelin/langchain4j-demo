@@ -59,6 +59,10 @@
         清空对话
       </button>
 
+      <button class="tools-btn" @click="$emit('show-local-tools')">
+        查看本地工具
+      </button>
+
       <button class="tools-btn" @click="$emit('show-tools')">
         查看MCP工具
       </button>
@@ -76,7 +80,7 @@ const props = defineProps({
   maxTokens: Number
 })
 
-const emit = defineEmits(['mode-change', 'settings-change', 'clear-chat', 'show-tools'])
+const emit = defineEmits(['mode-change', 'settings-change', 'clear-chat', 'show-local-tools', 'show-tools'])
 
 const modes = [
   { value: 'simple', label: '简单聊天' },

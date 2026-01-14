@@ -5,7 +5,7 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class ToolCallRequest {
+public class ToolCallRequestVo {
 
     /**
      * 用户消息
