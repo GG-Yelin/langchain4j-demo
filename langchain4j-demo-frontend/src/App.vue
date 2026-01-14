@@ -47,6 +47,10 @@ const showLocalToolsModal = ref(false)
 const showToolsModal = ref(false)
 
 const handleModeChange = (mode) => {
+  // 如果模式发生变化，清空聊天记录（开始新会话）
+  if (currentMode.value !== mode) {
+    messages.value = []
+  }
   currentMode.value = mode
 }
 

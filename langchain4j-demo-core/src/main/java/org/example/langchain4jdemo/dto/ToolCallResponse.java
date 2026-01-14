@@ -23,6 +23,11 @@ public class ToolCallResponse {
     private boolean success;
     private String errorMessage;
 
+    /**
+     * Token 使用情况
+     */
+    private TokenUsage tokenUsage;
+
     @Data
     @Builder
     public static class ToolExecution {
@@ -41,5 +46,24 @@ public class ToolCallResponse {
          */
         private String result;
 
+    }
+
+    @Data
+    @Builder
+    public static class TokenUsage {
+        /**
+         * 输入token数量
+         */
+        private Integer inputTokens;
+
+        /**
+         * 输出token数量
+         */
+        private Integer outputTokens;
+
+        /**
+         * 总token数量
+         */
+        private Integer totalTokens;
     }
 }

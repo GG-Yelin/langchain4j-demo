@@ -65,6 +65,19 @@ public class ToolServiceImpl implements ToolService {
             ChatResponse response = chatModel.chat(request);
             AiMessage aiMessage = response.aiMessage();
 
+            // 初始化 token 计数器
+            int totalInputTokens = 0;
+            int totalOutputTokens = 0;
+
+            // 累计第一次调用的 token
+            if (response.tokenUsage() != null) {
+                totalInputTokens += response.tokenUsage().inputTokenCount();
+                totalOutputTokens += response.tokenUsage().outputTokenCount();
+                log.info("First call token usage: input={}, output={}",
+                        response.tokenUsage().inputTokenCount(),
+                        response.tokenUsage().outputTokenCount());
+            }
+
             // 4. 检查 AI 是否要调用工具
             if (!aiMessage.hasToolExecutionRequests()) {
                 log.info("No tool execution requested");
@@ -72,6 +85,11 @@ public class ToolServiceImpl implements ToolService {
                         .success(true)
                         .content(aiMessage.text())
                         .toolExecutions(List.of())
+                        .tokenUsage(ToolCallResponse.TokenUsage.builder()
+                                .inputTokens(totalInputTokens)
+                                .outputTokens(totalOutputTokens)
+                                .totalTokens(totalInputTokens + totalOutputTokens)
+                                .build())
                         .build();
             }
 
@@ -126,13 +144,29 @@ public class ToolServiceImpl implements ToolService {
             ChatResponse finalResponse = chatModel.chat(finalRequest);
             String finalContent = finalResponse.aiMessage().text();
 
+            // 累计第二次调用的 token
+            if (finalResponse.tokenUsage() != null) {
+                totalInputTokens += finalResponse.tokenUsage().inputTokenCount();
+                totalOutputTokens += finalResponse.tokenUsage().outputTokenCount();
+                log.info("Second call token usage: input={}, output={}",
+                        finalResponse.tokenUsage().inputTokenCount(),
+                        finalResponse.tokenUsage().outputTokenCount());
+            }
+
             log.info("Final response: {}", finalContent);
+            log.info("Total token usage: input={}, output={}, total={}",
+                    totalInputTokens, totalOutputTokens, totalInputTokens + totalOutputTokens);
 
             // 7. 返回最终结果
             ToolCallResponse result = ToolCallResponse.builder()
                     .success(true)
                     .content(finalContent)
                     .toolExecutions(toolExecutions)
+                    .tokenUsage(ToolCallResponse.TokenUsage.builder()
+                            .inputTokens(totalInputTokens)
+                            .outputTokens(totalOutputTokens)
+                            .totalTokens(totalInputTokens + totalOutputTokens)
+                            .build())
                     .build();
 
             log.info("Returning response: success={}, content={}, toolExecutions={}",

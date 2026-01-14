@@ -35,6 +35,12 @@
             <span class="tool-call-name">{{ call.toolName }}</span>:
             {{ call.result || JSON.stringify(call.arguments) }}
           </div>
+          <!-- Tool call token usage -->
+          <div v-if="message.metadata.tokens" class="tool-tokens">
+            Token消耗: 输入 {{ message.metadata.tokens.inputTokens || 0 }} /
+            输出 {{ message.metadata.tokens.outputTokens || 0 }} /
+            总计 {{ message.metadata.tokens.totalTokens || 0 }}
+          </div>
         </div>
 
         <!-- MCP tools -->
@@ -186,6 +192,16 @@ const hasMetadata = computed(() => {
 .tool-call-name {
   font-weight: 600;
   color: #667eea;
+}
+
+.tool-tokens {
+  background: #e3f2fd;
+  padding: 6px 10px;
+  border-radius: 6px;
+  margin-top: 6px;
+  color: #1565c0;
+  font-weight: 500;
+  font-size: 11px;
 }
 
 @media (max-width: 768px) {
