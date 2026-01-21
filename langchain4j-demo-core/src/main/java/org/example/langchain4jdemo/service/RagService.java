@@ -13,13 +13,6 @@ public interface RagService {
      */
     RagResponse query(RagRequest request);
 
-    /**
-     * 添加文档到知识库
-     */
-    void addDocument(String content, String source);
 
-    /**
-     * 从文件加载文档到知识库
-     */
-    void loadDocumentFromFile(String filePath);
+
 }

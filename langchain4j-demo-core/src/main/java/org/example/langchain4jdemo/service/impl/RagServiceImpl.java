@@ -1,5 +1,16 @@
 package org.example.langchain4jdemo.service.impl;
 
+import dev.langchain4j.data.document.Document;
+import dev.langchain4j.data.document.DocumentSplitter;
+import dev.langchain4j.data.document.loader.FileSystemDocumentLoader;
+import dev.langchain4j.data.document.splitter.DocumentSplitters;
+import dev.langchain4j.data.embedding.Embedding;
+import dev.langchain4j.data.segment.TextSegment;
+import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.embedding.EmbeddingModel;
+import dev.langchain4j.store.embedding.EmbeddingStore;
+import dev.langchain4j.store.embedding.EmbeddingStoreIngestor;
+import dev.langchain4j.store.embedding.inmemory.InMemoryEmbeddingStore;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.langchain4jdemo.dto.RagRequest;
@@ -7,23 +18,25 @@ import org.example.langchain4jdemo.dto.RagResponse;
 import org.example.langchain4jdemo.service.RagService;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class RagServiceImpl implements RagService {
 
-    // TODO: 注入相关依赖
-    // 示例:
-    // private final EmbeddingModel embeddingModel;
-    // private final EmbeddingStore<TextSegment> embeddingStore;
-    // private final ChatLanguageModel chatModel;
+     private final EmbeddingModel embeddingModel;
+
+     private final EmbeddingStore<TextSegment> embeddingStore;
+
+     private final ChatLanguageModel chatModel;
 
     @Override
     public RagResponse query(RagRequest request) {
         try {
-            // TODO: 在这里实现RAG查询
-            // 步骤1: 将查询转换为向量
-            // Embedding queryEmbedding = embeddingModel.embed(request.getQuery()).content();
+
+             // 步骤1: 将查询转换为向量
+             Embedding queryEmbedding = embeddingModel.embed(request.getQuery()).content();
 
             // 步骤2: 在向量存储中检索相似文档
             // EmbeddingSearchRequest searchRequest = EmbeddingSearchRequest.builder()
@@ -53,28 +66,15 @@ public class RagServiceImpl implements RagService {
         }
     }
 
-    @Override
-    public void addDocument(String content, String source) {
-        // TODO: 在这里实现添加文档到知识库
-        // 示例:
-        // TextSegment segment = TextSegment.from(content, Metadata.from("source", source));
-        // Embedding embedding = embeddingModel.embed(segment).content();
-        // embeddingStore.add(embedding, segment);
 
-        throw new UnsupportedOperationException("请实现 addDocument 方法");
-    }
+    private void loadDocumentFromPath(String path) {
 
-    @Override
-    public void loadDocumentFromFile(String filePath) {
-        // TODO: 在这里实现从文件加载文档
-        // 示例:
-        // Document document = FileSystemDocumentLoader.loadDocument(filePath);
-        // DocumentSplitter splitter = DocumentSplitters.recursive(500, 50);
-        // List<TextSegment> segments = splitter.split(document);
-        // for (TextSegment segment : segments) {
-        //     addDocument(segment.text(), filePath);
-        // }
+        // 加载目录下的所有文档
+        List<Document> documents = FileSystemDocumentLoader.loadDocuments(path);
 
-        throw new UnsupportedOperationException("请实现 loadDocumentFromFile 方法");
+        // 将文档存储在专门的嵌入存储（向量数据库）中
+        InMemoryEmbeddingStore<TextSegment> embeddingStore = new InMemoryEmbeddingStore<>();
+        EmbeddingStoreIngestor.ingest(documents, embeddingStore);
+
     }
 }

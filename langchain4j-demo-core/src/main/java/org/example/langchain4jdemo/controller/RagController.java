@@ -25,25 +25,5 @@ public class RagController {
         return ragService.query(request);
     }
 
-    /**
-     * 添加文档到知识库
-     * POST /api/rag/document
-     */
-    @PostMapping("/document")
-    public ResponseEntity<Map<String, String>> addDocument(
-            @RequestParam String content,
-            @RequestParam(required = false, defaultValue = "manual") String source) {
-        ragService.addDocument(content, source);
-        return ResponseEntity.ok(Map.of("message", "Document added successfully"));
-    }
 
-    /**
-     * 从文件加载文档
-     * POST /api/rag/document/file
-     */
-    @PostMapping("/document/file")
-    public ResponseEntity<Map<String, String>> loadDocument(@RequestParam String filePath) {
-        ragService.loadDocumentFromFile(filePath);
-        return ResponseEntity.ok(Map.of("message", "Document loaded successfully"));
-    }
 }
