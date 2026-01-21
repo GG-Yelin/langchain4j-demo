@@ -59,6 +59,10 @@
         清空对话
       </button>
 
+      <button class="rag-load-btn" @click="$emit('show-rag-load')">
+        📚 加载文档到向量库
+      </button>
+
       <button class="tools-btn" @click="$emit('show-local-tools')">
         查看本地工具
       </button>
@@ -80,7 +84,7 @@ const props = defineProps({
   maxTokens: Number
 })
 
-const emit = defineEmits(['mode-change', 'settings-change', 'clear-chat', 'show-local-tools', 'show-tools'])
+const emit = defineEmits(['mode-change', 'settings-change', 'clear-chat', 'show-rag-load', 'show-local-tools', 'show-tools'])
 
 const modes = [
   { value: 'simple', label: '简单聊天' },
@@ -190,6 +194,7 @@ const updateSettings = (newSettings) => {
 }
 
 .clear-btn,
+.rag-load-btn,
 .tools-btn {
   width: 100%;
   padding: 10px;
@@ -207,6 +212,18 @@ const updateSettings = (newSettings) => {
   background: #ff4444;
   color: white;
   border-color: #ff4444;
+}
+
+.rag-load-btn {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  color: white;
+  border-color: transparent;
+  font-weight: 600;
+}
+
+.rag-load-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(17, 153, 142, 0.4);
 }
 
 .tools-btn:hover {

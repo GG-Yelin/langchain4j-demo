@@ -154,3 +154,9 @@ export const assistantChatWithToolsVariables = async (params) => {
   })
   return data
 }
+
+// RAG Document Loading API
+export const loadDocuments = async () => {
+  const { data } = await api.post('/rag/load')
+  return data
+}

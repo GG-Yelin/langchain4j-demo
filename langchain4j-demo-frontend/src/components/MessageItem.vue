@@ -1,6 +1,6 @@
 <template>
   <div :class="['message', message.role]">
-    <div class="message-avatar">
+    <div v-if="message.role !== 'system'" class="message-avatar">
       {{ message.role === 'user' ? 'U' : 'AI' }}
     </div>
     <div class="message-wrapper">
@@ -125,6 +125,25 @@ const hasMetadata = computed(() => {
 
 .message.assistant .message-avatar {
   background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.message.system {
+  align-self: center;
+  max-width: 90%;
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  padding: 12px 20px;
+  border-radius: 20px;
+  color: white;
+  font-weight: 500;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(17, 153, 142, 0.3);
+}
+
+.message.system .message-content {
+  background: transparent;
+  color: white;
+  padding: 0;
+  border-radius: 0;
 }
 
 .message-wrapper {

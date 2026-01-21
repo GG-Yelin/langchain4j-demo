@@ -17,6 +17,11 @@ langchain4j:
       timeout: 60s
       log-requests: true
       log-responses: true
+    embedding-model:
+      base-url: http://langchain4j.dev/demo/openai/v1
+      api-key: demo
+      model-name: text-embedding-3-small
+      timeout: 60s
 
 # MCP Server 配置 (HTTP/SSE 模式)
 mcp:

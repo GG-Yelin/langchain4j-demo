@@ -8,6 +8,7 @@
       @mode-change="handleModeChange"
       @settings-change="handleSettingsChange"
       @clear-chat="clearMessages"
+      @show-rag-load="showRagLoadModal = true"
       @show-local-tools="showLocalToolsModal = true"
       @show-tools="showToolsModal = true"
     />
@@ -17,6 +18,11 @@
       :is-loading="isLoading"
       @send-message="sendMessage"
       @send-assistant-message="sendAssistantMessage"
+    />
+    <RagDocumentModal
+      v-if="showRagLoadModal"
+      @close="showRagLoadModal = false"
+      @documents-loaded="handleDocumentsLoaded"
     />
     <LocalToolsModal
       v-if="showLocalToolsModal"
@@ -33,6 +39,7 @@
 import { ref } from 'vue'
 import Sidebar from './components/Sidebar.vue'
 import ChatView from './views/ChatView.vue'
+import RagDocumentModal from './components/RagDocumentModal.vue'
 import LocalToolsModal from './components/LocalToolsModal.vue'
 import McpToolsModal from './components/McpToolsModal.vue'
 import * as chatApi from './api/chat'
@@ -43,6 +50,7 @@ const temperature = ref(0.7)
 const maxTokens = ref(2000)
 const messages = ref([])
 const isLoading = ref(false)
+const showRagLoadModal = ref(false)
 const showLocalToolsModal = ref(false)
 const showToolsModal = ref(false)
 
@@ -62,6 +70,13 @@ const handleSettingsChange = (settings) => {
 
 const clearMessages = () => {
   messages.value = []
+}
+
+const handleDocumentsLoaded = () => {
+  // 文档加载成功后，可以添加一条系统消息提示用户
+  addMessage('system', '✅ 文档已成功加载到向量数据库，现在可以使用 RAG 问答模式进行提问了！', {
+    type: 'system-notification'
+  })
 }
 
 const addMessage = (role, content, metadata = {}) => {

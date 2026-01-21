@@ -25,5 +25,24 @@ public class RagController {
         return ragService.query(request);
     }
 
+    /**
+     * 从 classpath:knowledge 目录加载文档到向量数据库
+     * POST /api/rag/load
+     */
+    @PostMapping("/load")
+    public ResponseEntity<?> loadDocuments() {
+        try {
+            ragService.loadDocumentsFromKnowledge();
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "已成功从 knowledge 目录加载文档"
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", e.getMessage()
+            ));
+        }
+    }
 
 }
