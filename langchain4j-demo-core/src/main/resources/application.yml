@@ -29,7 +29,7 @@ mcp:
   # - stdio: 通过标准输入输出与 MCP Server 通信（会自动启动 MCP Server JAR）
   # - http:  通过 HTTP/SSE 与远程 MCP Server 通信（需要手动启动 MCP Server）
   transport:
-    type: stdio  # 使用 Stdio 模式（自动启动 MCP Server，适合开发测试）
+    type: http  # 使用 Stdio 模式（自动启动 MCP Server，适合开发测试）
     # 注意: 当前 Spring AI MCP Server 与 LangChain4j MCP Client 的 stdio 模式存在兼容性问题
     # 建议使用原生 MCP Server 或等待修复
 

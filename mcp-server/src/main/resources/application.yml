@@ -17,9 +17,9 @@ server:
 
 logging:
   level:
-    root: OFF
-    org.example.mcpserver: OFF
-    org.springframework: OFF
-    org.springframework.ai: OFF
-    org.springframework.ai.mcp: OFF
-    org.springaicommunity.mcp: OFF
+    root: INFO
+    org.example.mcpserver: DEBUG
+    org.springframework: INFO
+    org.springframework.ai: DEBUG
+    org.springframework.ai.mcp: DEBUG
+    org.springaicommunity.mcp: DEBUG
