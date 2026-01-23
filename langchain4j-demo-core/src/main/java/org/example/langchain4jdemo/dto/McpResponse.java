@@ -19,6 +19,11 @@ public class McpResponse {
      */
     private List<McpToolExecution> toolExecutions;
 
+    /**
+     * 使用的工具名称列表（简化版本）
+     */
+    private List<String> toolsUsed;
+
     private boolean success;
     private String errorMessage;
 

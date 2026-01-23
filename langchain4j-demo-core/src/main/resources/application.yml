@@ -23,10 +23,23 @@ langchain4j:
       model-name: text-embedding-3-small
       timeout: 60s
 
-# MCP Server 配置 (HTTP/SSE 模式)
+# MCP (Model Context Protocol) 配置
 mcp:
+  # 传输方式配置
+  # - stdio: 通过标准输入输出与 MCP Server 通信（会自动启动 MCP Server JAR）
+  # - http:  通过 HTTP/SSE 与远程 MCP Server 通信（需要手动启动 MCP Server）
+  transport:
+    type: stdio  # 使用 Stdio 模式（自动启动 MCP Server，适合开发测试）
+    # 注意: 当前 Spring AI MCP Server 与 LangChain4j MCP Client 的 stdio 模式存在兼容性问题
+    # 建议使用原生 MCP Server 或等待修复
+
+  # MCP Server 配置
   server:
-    base-url: http://localhost:8081
+    # HTTP/SSE 模式: MCP Server 的地址（当 type=http 时使用）
+    url: http://localhost:8081
+
+    # Stdio 模式: MCP Server JAR 文件路径（当 type=stdio 时使用）
+    jar: ../mcp-server/target/mcp-server-0.0.1-SNAPSHOT.jar
 
 # 日志配置
 logging:

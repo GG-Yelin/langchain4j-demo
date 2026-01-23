@@ -1,34 +1,25 @@
-server:
-  port: 8081  # MCP Server 端口
-
 spring:
   application:
     name: mcp-server
-  main:
-    # Web应用（HTTP/SSE模式）
-    web-application-type: servlet
+  ai:
+    mcp:
+      server:
+        # MCP Server 基本配置
+        name: langchain4j-demo-mcp-server
+        version: 1.0.0
+        # 使用 HTTP/SSE 传输
+        stdio: false
+        # 使用 STATELESS 协议
+        protocol: STATELESS
 
-# MCP Server 配置
-spring.ai.mcp.server:
-  name: langchain4j-demo-mcp-server
-  version: 1.0.0
-  sse-message-endpoint: /mcp/message  # SSE 消息端点
+server:
+  port: 8081
 
-# 工具配置
-mcp:
-  tools:
-    filesystem:
-      # 文件系统工具允许访问的根目录
-      base-path: ${user.home}
-    database:
-      # 数据库连接配置（如果使用DatabaseTool）
-      jdbc-url:
-      username:
-      password:
-
-# 日志配置
 logging:
   level:
-    root: INFO
-    org.example.mcpserver: DEBUG
-    org.springframework.ai.mcp: DEBUG
+    root: OFF
+    org.example.mcpserver: OFF
+    org.springframework: OFF
+    org.springframework.ai: OFF
+    org.springframework.ai.mcp: OFF
+    org.springaicommunity.mcp: OFF
